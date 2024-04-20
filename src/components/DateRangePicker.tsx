@@ -1,6 +1,6 @@
 // components/DateRangePicker.tsx
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface DateRangePickerProps {
   // Props definition
@@ -20,6 +20,8 @@ function DateRangePicker({
   const [displayedMonth, setDisplayedMonth] = useState<number>(
     new Date().getMonth()
   );
+  // State to track the currently hovered date
+  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
 
   // Function to generate an array of dates for the displayed month
   const generateMonthDates = (year: number, month: number): Date[] => {
@@ -79,56 +81,123 @@ function DateRangePicker({
     }
   };
 
+  const getMonthName = (month: number): string => {
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return monthNames[month];
+  };
+
+  // Function to get the local date string
+  const getLocalDateString = (date: Date): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    };
+    return date.toLocaleDateString(undefined, options);
+  };
+
+  // Get today's date
+  const today = new Date();
+  const todayDateString = getLocalDateString(today);
+
+  // Function to determine if a date is within the selected range
+  const isInSelectedRange = (date: Date): boolean => {
+    return (
+      (startDate && date >= startDate && date <= endDate) ||
+      (endDate && date >= endDate && date <= startDate)
+    );
+  };
+
+  // Function to determine the class to apply to each date cell
+  const getDateCellClass = (date: Date): string => {
+    let classNames = 'p-2 text-center';
+    if (startDate && endDate && date >= startDate && date <= endDate) {
+      classNames += ' bg-blue-200';
+    } else if (
+      hoveredDate &&
+      startDate &&
+      date > startDate &&
+      date <= hoveredDate
+    ) {
+      classNames += ' bg-blue-100';
+    }
+    return classNames;
+  };
+
   return (
-    <div className="container mx-auto">
-      {/* Buttons for year navigation */}
-      <div className="flex justify-center mb-4">
-        <button
-          className="mr-2"
-          onClick={() => handleYearChange(displayedYear - 1)}
-        >
-          Previous Year
-        </button>
-        <button onClick={() => handleYearChange(displayedYear + 1)}>
-          Next Year
-        </button>
-      </div>
-      {/* Buttons for month navigation */}
-      <div className="flex justify-center mb-4">
-        <button
-          className="mr-2"
-          onClick={() => handleMonthChange(displayedMonth - 1)}
-        >
-          Previous Month
-        </button>
-        <button onClick={() => handleMonthChange(displayedMonth + 1)}>
-          Next Month
-        </button>
-      </div>
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2">
-        {/* Render each date in the calendar grid */}
-        {monthDates.map((date) => (
-          <div
-            key={date.toISOString()}
-            className={`p-2 text-center ${
-              date.getMonth() === displayedMonth
-                ? 'bg-gray-200 cursor-pointer'
-                : 'bg-gray-300'
-            }${
-              // Apply different style to selected dates
-              startDate && endDate && date >= startDate && date <= endDate
-                ? 'bg-blue-500 text-white'
-                : ''
-            }
-            `}
-            onClick={() => handleDateSelect(date)}
+    <>
+      {/* Header with month, year, and navigation arrows */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Display month and year */}
+        <div className="mr-2">{`${getMonthName(displayedMonth)}, ${displayedYear}`}</div>
+        <div className="space-x-4 flex">
+          <button
+            className="text-gray-500 font-semibold mr-2"
+            onClick={() => handleMonthChange(displayedMonth - 1)}
           >
-            {date.getDate()}
-          </div>
-        ))}
+            {' '}
+            &lt;{' '}
+          </button>
+          <button
+            className="text-gray-500 font-semibold"
+            onClick={() => handleMonthChange(displayedMonth + 1)}
+          >
+            {' '}
+            &gt;{' '}
+          </button>
+        </div>
       </div>
-    </div>
+      <div className="container mx-auto">
+        {/* Buttons for year navigation */}
+        <div className="flex justify-center mb-4">
+          <button
+            className="mr-2"
+            onClick={() => handleYearChange(displayedYear - 1)}
+          >
+            Previous Year
+          </button>
+          <button onClick={() => handleYearChange(displayedYear + 1)}>
+            Next Year
+          </button>
+        </div>
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-2">
+          {/* Render each date in the calendar grid */}
+          {monthDates.map((date) => (
+            <div
+              key={date.toISOString()}
+              className={getDateCellClass(date)}
+              onClick={() => handleDateSelect(date)}
+              onMouseEnter={() => setHoveredDate(date)}
+              onMouseLeave={() => setHoveredDate(null)}
+            >
+              <span
+                className={`${
+                  getLocalDateString(date) === todayDateString
+                    ? 'rounded-full border-2 border-blue-500 text-blue-500 p-2'
+                    : ''
+                }`}
+              >
+                {date.getDate()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
