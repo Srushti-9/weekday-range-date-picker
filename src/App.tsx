@@ -8,21 +8,37 @@ function App() {
     endDate: Date,
     weekends: Date[]
   ) => {
-    console.log('Selected Date Range:', startDate, endDate);
-    console.log('Weekend Dates:', weekends);
+    console.log('Selected date range:', [
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0],
+    ]);
+    console.log(
+      'Weekend dates within range:',
+      weekends.map((date) => date.toISOString().split('T')[0])
+    );
   };
 
-  // Dummy predefined ranges
+  // Get today's date in the local timezone
+  const today = new Date();
+  const timezoneOffset = today.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
+  const localToday = new Date(today.getTime() - timezoneOffset); // Adjust for timezone offset
+
+  // Define predefined ranges array
   const predefinedRanges = [
     {
       label: 'Last 7 days',
-      start: new Date(2023, 2, 23),
-      end: new Date(2023, 2, 29),
+      start: new Date(localToday.getTime() - 6 * 24 * 60 * 60 * 1000),
+      end: localToday,
     },
     {
       label: 'Last 30 days',
-      start: new Date(2023, 2, 1),
-      end: new Date(2023, 2, 30),
+      start: new Date(localToday.getTime() - 29 * 24 * 60 * 60 * 1000),
+      end: localToday,
+    },
+    {
+      label: 'Last 60 days',
+      start: new Date(localToday.getTime() - 59 * 24 * 60 * 60 * 1000),
+      end: localToday,
     },
   ];
 

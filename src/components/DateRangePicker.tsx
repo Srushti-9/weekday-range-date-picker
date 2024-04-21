@@ -5,12 +5,12 @@ import { useState } from 'react';
 interface DateRangePickerProps {
   // Props definition
   onSelectRange: (startDate: Date, endDate: Date, weekends: Date[]) => void;
-  //predefinedRanges: { label: string; start: Date; end: Date }[];
+  predefinedRanges: { label: string; start: Date; end: Date }[];
 }
 
 function DateRangePicker({
   onSelectRange,
-  //predefinedRanges,
+  predefinedRanges,
 }: DateRangePickerProps) {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -21,7 +21,7 @@ function DateRangePicker({
     new Date().getMonth()
   );
   // State to track the currently hovered date
-  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  //const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
 
   // Function to generate an array of dates for the displayed month
   const generateMonthDates = (year: number, month: number): Date[] => {
@@ -57,9 +57,16 @@ function DateRangePicker({
 
   // Function to handle selection of a date
   const handleDateSelect = (selectedDate: Date) => {
-    if (!startDate) {
+    // Check if the selected date is a weekend (Saturday or Sunday)
+    if (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
+      // Do nothing if the selected date is a weekend
+      return;
+    }
+
+    if (!startDate || endDate) {
       // Set the start date
       setStartDate(selectedDate);
+      setEndDate(null); // Reset end date to allow selecting a new range
     } else if (!endDate && selectedDate > startDate) {
       // Set the end date if it's after the start date
       setEndDate(selectedDate);
@@ -115,87 +122,182 @@ function DateRangePicker({
 
   // Function to determine if a date is within the selected range
   const isInSelectedRange = (date: Date): boolean => {
-    return (
-      (startDate && date >= startDate && date <= endDate) ||
-      (endDate && date >= endDate && date <= startDate)
-    );
+    if (startDate && endDate) {
+      return (
+        (date >= startDate && date <= endDate) ||
+        (date >= endDate && date <= startDate)
+      );
+    } else {
+      return false;
+    }
   };
 
-  // Function to determine the class to apply to each date cell
-  const getDateCellClass = (date: Date): string => {
-    let classNames = 'p-2 text-center';
-    if (startDate && endDate && date >= startDate && date <= endDate) {
-      classNames += ' bg-blue-200';
-    } else if (
-      hoveredDate &&
-      startDate &&
-      date > startDate &&
-      date <= hoveredDate
-    ) {
-      classNames += ' bg-blue-100';
+  // Function to handle click on predefined range button
+  const handlePredefinedRangeClick = (start: Date, end: Date) => {
+    setStartDate(start);
+    setEndDate(end);
+    // Call the onSelectRange callback with selected range and weekend dates
+    const weekends = [];
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+      if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+        weekends.push(new Date(currentDate));
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
     }
-    return classNames;
+    onSelectRange(start, end, weekends);
+  };
+
+  // Function to generate an array of weekdays
+  const generateWeekdays = (): string[] => {
+    const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Initials for each day of the week
+    // Get the starting day of the week (0 for Sunday, 1 for Monday)
+    const startingDay = new Date().getDay();
+    // Rotate the weekdays array to match the starting day of the week
+    return [...weekdays.slice(startingDay), ...weekdays.slice(0, startingDay)];
+  };
+
+  // Generate weekdays array
+  const weekdays = generateWeekdays();
+
+  // Function to format date as "Month Day, Year" (e.g., "April 20, 2024")
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   return (
     <>
-      {/* Header with month, year, and navigation arrows */}
-      <div className="flex justify-between items-center mb-4">
-        {/* Display month and year */}
-        <div className="mr-2">{`${getMonthName(displayedMonth)}, ${displayedYear}`}</div>
-        <div className="space-x-4 flex">
-          <button
-            className="text-gray-500 font-semibold mr-2"
-            onClick={() => handleMonthChange(displayedMonth - 1)}
-          >
-            {' '}
-            &lt;{' '}
-          </button>
-          <button
-            className="text-gray-500 font-semibold"
-            onClick={() => handleMonthChange(displayedMonth + 1)}
-          >
-            {' '}
-            &gt;{' '}
-          </button>
-        </div>
-      </div>
-      <div className="container mx-auto">
-        {/* Buttons for year navigation */}
-        <div className="flex justify-center mb-4">
-          <button
-            className="mr-2"
-            onClick={() => handleYearChange(displayedYear - 1)}
-          >
-            Previous Year
-          </button>
-          <button onClick={() => handleYearChange(displayedYear + 1)}>
-            Next Year
-          </button>
-        </div>
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {/* Render each date in the calendar grid */}
-          {monthDates.map((date) => (
-            <div
-              key={date.toISOString()}
-              className={getDateCellClass(date)}
-              onClick={() => handleDateSelect(date)}
-              onMouseEnter={() => setHoveredDate(date)}
-              onMouseLeave={() => setHoveredDate(null)}
-            >
-              <span
-                className={`${
-                  getLocalDateString(date) === todayDateString
-                    ? 'rounded-full border-2 border-blue-500 text-blue-500 p-2'
+      <div className="container mx-auto max-w-md">
+        <div>
+          {/* Header with month, year, and navigation arrows */}
+          <div className="flex justify-between items-center mb-4">
+            {/* Container for previous year and month buttons */}
+            <div className="flex items-center">
+              {' '}
+              {/* Flex container for previous year and month buttons */}
+              {/* Left double arrow for previous year */}
+              <button
+                className="text-gray-500 font-semibold mr-2 px-2"
+                onClick={() => handleYearChange(displayedYear - 1)}
+              >
+                {'<<'} {/* Double left arrow for previous year */}
+              </button>
+              {/* Left arrow for previous month */}
+              <button
+                className="text-gray-500 font-semibold mr-2 px-2"
+                onClick={() => handleMonthChange(displayedMonth - 1)}
+              >
+                &lt;
+              </button>
+            </div>
+            {/* Display month and year */}
+            <div>{`${getMonthName(displayedMonth)}, ${displayedYear}`}</div>
+            <div className="flex items-center">
+              {/* Right arrow for next month */}
+              <button
+                className="text-gray-500 font-semibold mr-2 px-2"
+                onClick={() => handleMonthChange(displayedMonth + 1)}
+              >
+                &gt;
+              </button>
+              {/* Right double arrow for next year */}
+              <button
+                className="px-2"
+                onClick={() => handleYearChange(displayedYear + 1)}
+              >
+                {'>>'} {/* Double right arrow for next year */}
+              </button>
+            </div>
+          </div>
+          <div className="container mx-auto">
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-2">
+              {/* Render each date in the calendar grid */}
+              {weekdays.map((day, index) => (
+                <div
+                  key={index}
+                  className="p-2 text-center text-sm font-light text-gray-500"
+                >
+                  {day}
+                </div>
+              ))}
+              {monthDates.map((date) => (
+                <div
+                  key={date.toISOString()}
+                  className={`text-center cursor-pointer ${
+                    date.getDay() === 0 || date.getDay() === 6
+                      ? 'cursor-not-allowed'
+                      : ''
+                  }`}
+                  onClick={() => handleDateSelect(date)}
+                  //onMouseEnter={() => setHoveredDate(date)}
+                  //onMouseLeave={() => setHoveredDate(null)}
+                >
+                  <span
+                    className={`inline-block p-1 w-10 h-10 ${
+                      getLocalDateString(date) === todayDateString
+                        ? 'rounded-full border-2 border-blue-500 text-blue-500 p-2'
+                        : ''
+                    }${
+                      startDate &&
+                      startDate.toDateString() === date.toDateString()
+                        ? ' bg-blue-500 text-white rounded-full'
+                        : ''
+                    }
+                ${
+                  endDate && endDate.toDateString() === date.toDateString()
+                    ? ' bg-blue-500 text-white rounded-full'
+                    : ''
+                }
+                ${
+                  isInSelectedRange(date) &&
+                  date !== startDate &&
+                  date !== endDate &&
+                  date.getDay() !== 0 && // Exclude Sundays
+                  date.getDay() !== 6 // Exclude Saturdays
+                    ? 'rounded-full border-2 border-blue-500 text-blue-500 bg-blue-200'
+                    : ''
+                }${
+                  date.getDay() === 0 || date.getDay() === 6
+                    ? 'text-gray-400'
                     : ''
                 }`}
-              >
-                {date.getDate()}
-              </span>
+                  >
+                    {date.getDate()}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
+        {/* Predefined ranges */}
+        <div className="mt-4 flex items-center">
+          <p className="font-semibold mr-3">Date Presets</p>
+          <div className="flex flex-wrap gap-2">
+            {predefinedRanges.map((range) => (
+              <button
+                key={range.label}
+                className="bg-gray-200 px-3 py-1 rounded-md"
+                onClick={() =>
+                  handlePredefinedRangeClick(range.start, range.end)
+                }
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Selected date range display */}
+        {startDate && endDate && (
+          <div className="mt-4 text-left">
+            <span className="font-semibold">Selected Date Range:</span>{' '}
+            {formatDate(startDate)} to {formatDate(endDate)}
+          </div>
+        )}
       </div>
     </>
   );
