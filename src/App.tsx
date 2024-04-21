@@ -2,7 +2,7 @@ import './App.css';
 import DateRangePicker from './components/DateRangePicker';
 
 function App() {
-  // Dummy function to handle selection of date range
+  // function to handle selection of date range
   const handleSelectRange = (
     startDate: Date,
     endDate: Date,
