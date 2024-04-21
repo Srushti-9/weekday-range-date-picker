@@ -22,6 +22,7 @@ The Weekday Range Date Picker is a React component-based application that allows
 - User-friendly interface with navigation controls for switching between months and years.
 - Visual indication of selected dates and hover effects for improved usability.
 - Utilization of React hooks for managing component state and lifecycle methods.
+- Change handler function returns the selected date range and weekend dates within that range.
 
 ## Usage
 
