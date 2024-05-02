@@ -40,10 +40,7 @@ function CalendarGrid({
   // Function to generate an array of weekdays
   const generateWeekdays = (): string[] => {
     const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Initials for each day of the week
-    // Get the starting day of the week (0 for Sunday, 1 for Monday)
-    const startingDay = new Date().getDay();
-    // Rotate the weekdays array to match the starting day of the week
-    return [...weekdays.slice(startingDay), ...weekdays.slice(0, startingDay)];
+    return weekdays;
   };
 
   // Generate weekdays array

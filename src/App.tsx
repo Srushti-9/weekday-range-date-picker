@@ -8,14 +8,24 @@ function App() {
     endDate: Date,
     weekends: Date[]
   ) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    };
+
+    const formatDate = (date: Date): string => {
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      const [month, day, year] = formattedDate.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
     console.log('Selected date range:', [
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0],
+      formatDate(startDate),
+      formatDate(endDate),
     ]);
-    console.log(
-      'Weekend dates within range:',
-      weekends.map((date) => date.toISOString().split('T')[0])
-    );
+
+    console.log('Weekend dates within range:', weekends.map(formatDate));
   };
 
   // Get today's date in the local timezone

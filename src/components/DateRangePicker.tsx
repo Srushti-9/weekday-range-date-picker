@@ -49,22 +49,34 @@ function DateRangePicker({
     } else if (!endDate && selectedDate > startDate) {
       // Set the end date if it's after the start date
       setEndDate(selectedDate);
-      // Find weekend dates within the selected range
-      const weekends = [];
-      const currentDate = new Date(startDate);
-      while (currentDate <= selectedDate) {
-        if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-          weekends.push(new Date(currentDate));
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
+      const weekends = getWeekends(startDate, selectedDate);
       // Call the onSelectRange callback with selected range and weekend dates
       onSelectRange(startDate, selectedDate, weekends);
+    } else if (startDate > selectedDate) {
+      setStartDate(selectedDate);
+      setEndDate(startDate);
+
+      const weekends = getWeekends(selectedDate, startDate);
+      onSelectRange(selectedDate, startDate, weekends);
     } else {
       // Reset selection if the user clicks on an invalid date
       setStartDate(null);
       setEndDate(null);
     }
+  };
+
+  // Find weekend dates within the selected range
+  const getWeekends = (startDate: Date, selectedDate: Date): Date[] => {
+    const weekends = [];
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= selectedDate) {
+      if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+        weekends.push(new Date(currentDate));
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return weekends;
   };
 
   const getMonthName = (month: number): string => {
